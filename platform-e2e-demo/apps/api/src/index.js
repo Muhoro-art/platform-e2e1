@@ -1,4 +1,5 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
@@ -14,6 +15,14 @@ export function createApp({ pool, jwtSecret = process.env.JWT_SECRET } = {}) {
   app.use(express.json());
   app.use(cors());
   app.use(helmet());
+  app.use(
+    rateLimit({
+      windowMs: 60 * 1000,
+      limit: 120,
+      standardHeaders: true,
+      legacyHeaders: false
+    })
+  );
 
   const register = new client.Registry();
   client.collectDefaultMetrics({ register });
