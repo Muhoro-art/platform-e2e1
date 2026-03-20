@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin</title>
+    <script src="/app.js"></script>
+  </head>
+  <body>
+    <h1>Admin</h1>
+    <a href="/dashboard.html">Back to Dashboard</a>
+    <pre id="content">Loading...</pre>
+    <script>
+      (async () => {
+        const user = await window.platformAuth.requireAuth();
+        if (!user) return;
+
+        if (!user.roles.includes('admin')) {
+          document.getElementById('content').textContent = 'Forbidden: admin only';
+          return;
+        }
+
+        const response = await fetch('/admin/users', { headers: { ...window.platformAuth.authHeader() } });
+        const data = await response.json();
+        document.getElementById('content').textContent = JSON.stringify(data, null, 2);
+      })();
+    </script>
+  </body>
+</html>

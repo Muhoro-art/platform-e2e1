@@ -1,0 +1,4 @@
+node_modules/
+apps/api/node_modules/
+apps/api/data/*.db
+npm-debug.log*

@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Task List</title>
+    <script src="/app.js"></script>
+  </head>
+  <body>
+    <h1>Task List</h1>
+    <a href="/dashboard.html">Back to Dashboard</a>
+    <form id="create-task">
+      <input id="title" placeholder="Task title" />
+      <button type="submit">Add Task</button>
+    </form>
+    <ul id="tasks"></ul>
+
+    <script>
+      async function loadTasks() {
+        const user = await window.platformAuth.requireAuth();
+        if (!user) return;
+
+        const response = await fetch('/tasks', { headers: { ...window.platformAuth.authHeader() } });
+        const data = await response.json();
+        const list = document.getElementById('tasks');
+        list.innerHTML = '';
+
+        data.tasks.forEach((task) => {
+          const item = document.createElement('li');
+          item.textContent = `${task.id}: ${task.title} [${task.status}]`;
+          list.appendChild(item);
+        });
+      }
+
+      document.getElementById('create-task').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const title = document.getElementById('title').value;
+        if (!title) return;
+
+        await fetch('/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...window.platformAuth.authHeader() },
+          body: JSON.stringify({ title })
+        });
+        document.getElementById('title').value = '';
+        loadTasks();
+      });
+
+      loadTasks();
+    </script>
+  </body>
+</html>
