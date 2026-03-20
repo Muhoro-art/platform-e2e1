@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Deployment Status</title>
+    <script src="/app.js"></script>
+  </head>
+  <body>
+    <h1>Deployment Status</h1>
+    <a href="/dashboard.html">Back to Dashboard</a>
+    <p id="status">Loading...</p>
+    <script>
+      (async () => {
+        const user = await window.platformAuth.requireAuth();
+        if (!user) return;
+
+        const response = await fetch('/deployment/status', { headers: { ...window.platformAuth.authHeader() } });
+        const data = await response.json();
+        document.getElementById('status').textContent = `Last pipeline result: ${data.lastPipelineResult}`;
+      })();
+    </script>
+  </body>
+</html>

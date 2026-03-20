@@ -1,0 +1,11 @@
+{
+  "name": "platform-e2e-demo",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "start": "node apps/api/src/server.js",
+    "test": "npm --workspace apps/api test"
+  }
+}

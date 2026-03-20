@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard</title>
+    <script src="/app.js"></script>
+  </head>
+  <body>
+    <h1>Dashboard</h1>
+    <nav>
+      <a href="/tasks.html">Task List</a>
+      <a id="admin-link" href="/admin.html" style="display:none;">Admin</a>
+      <a href="/deployment-status.html">Deployment Status</a>
+      <a href="/signin.html" onclick="localStorage.clear()">Sign Out</a>
+    </nav>
+    <p id="welcome"></p>
+    <script>
+      (async () => {
+        const user = await window.platformAuth.requireAuth();
+        if (!user) return;
+        document.getElementById('welcome').textContent = `Welcome ${user.username}`;
+        if (user.roles.includes('admin')) {
+          document.getElementById('admin-link').style.display = 'inline';
+        }
+      })();
+    </script>
+  </body>
+</html>
