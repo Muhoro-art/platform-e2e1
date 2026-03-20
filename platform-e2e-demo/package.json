@@ -1,0 +1,11 @@
+{
+  "name": "platform-e2e-demo",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm --filter api test",
+    "build": "pnpm --filter web build"
+  }
+}
