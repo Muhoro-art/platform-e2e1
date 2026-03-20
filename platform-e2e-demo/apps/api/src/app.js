@@ -1,6 +1,7 @@
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
-const { createDatabase, initializeSchema } = require('./db');
+const { createDatabase, initializeSchema, hashPassword } = require('./db');
 
 function createApp(options = {}) {
   const metrics = { logins: 0, taskCreates: 0, taskUpdates: 0, adminAccess: 0 };
@@ -67,10 +68,10 @@ function createApp(options = {}) {
       return res.status(400).json({ error: 'username and password are required' });
     }
 
-    const user = await database.get('SELECT id, username FROM users WHERE username = ? AND password = ?', [
-      username,
-      password
-    ]);
+    const userRecord = await database.get('SELECT id, username, password FROM users WHERE username = ?', [username]);
+    const user = userRecord && userRecord.password === hashPassword(password, userRecord.password.split(':')[0])
+      ? { id: userRecord.id, username: userRecord.username }
+      : null;
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -83,7 +84,7 @@ function createApp(options = {}) {
       [user.id]
     );
 
-    const token = `token-${user.id}-${Date.now()}`;
+    const token = crypto.randomBytes(32).toString('hex');
     tokens.set(token, user.id);
     metrics.logins += 1;
     await writeAudit('login', user.id, `User ${user.username} logged in`);
@@ -174,7 +175,7 @@ function createApp(options = {}) {
 
   app.use(express.static(path.join(__dirname, '..', '..', 'web')));
   app.get('/', (_req, res) => {
-    res.sendFile(path.join(__dirname, '..', '..', 'web', 'signin.html'));
+    res.redirect('/signin.html');
   });
 
   app.locals.database = database;

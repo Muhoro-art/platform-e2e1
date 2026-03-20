@@ -1,6 +1,18 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const sqlite3 = require('sqlite3').verbose();
+
+const HASH_ALGORITHM = 'sha256';
+const HASH_ITERATIONS = 100000;
+const HASH_KEYLEN = 64;
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const derivedKey = crypto
+    .pbkdf2Sync(password, salt, HASH_ITERATIONS, HASH_KEYLEN, HASH_ALGORITHM)
+    .toString('hex');
+  return `${salt}:${derivedKey}`;
+}
 
 function ensureDirectory(dbPath) {
   if (dbPath === ':memory:') {
@@ -100,14 +112,30 @@ async function initializeSchema(database) {
   await database.run("INSERT OR IGNORE INTO roles (id, name) VALUES (1, 'admin')");
   await database.run("INSERT OR IGNORE INTO roles (id, name) VALUES (2, 'user')");
 
-  await database.run("INSERT OR IGNORE INTO users (id, username, password) VALUES (1, 'admin', 'admin123')");
-  await database.run("INSERT OR IGNORE INTO users (id, username, password) VALUES (2, 'user', 'user123')");
+  await database.run('INSERT OR IGNORE INTO users (id, username, password) VALUES (?, ?, ?)', [
+    1,
+    'admin',
+    hashPassword('admin123')
+  ]);
+  await database.run('INSERT OR IGNORE INTO users (id, username, password) VALUES (?, ?, ?)', [
+    2,
+    'user',
+    hashPassword('user123')
+  ]);
 
   await database.run('INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (1, 1)');
   await database.run('INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (2, 2)');
+
+  const existingUsers = await database.all('SELECT id, password FROM users');
+  for (const user of existingUsers) {
+    if (!user.password.includes(':')) {
+      await database.run('UPDATE users SET password = ? WHERE id = ?', [hashPassword(user.password), user.id]);
+    }
+  }
 }
 
 module.exports = {
   createDatabase,
-  initializeSchema
+  initializeSchema,
+  hashPassword
 };
